@@ -1,0 +1,85 @@
+
+on:
+  workflow_call:
+    inputs:
+      CONFIG_FOLDER_PATH:
+        description: "The base path the terraform config you are wanting to plan"
+        required: true
+        type: string
+      WORKLOAD_IDENTITY_PROVIDER:
+        description: "The workload identity provider in GCP to authenticate against eg projects/{project_id_number}/locations/global/workloadIdentityPools/{pool_name}/providers/{provider_name}"
+        required: true
+        type: string
+      SERVICE_ACCOUNT:
+        description: "The full service account name that the workload identity provider will assume eg fg-sa-global-iac-myserviceaccount@somevalue.iam.gserviceaccount.com"
+        required: true
+        type: string
+
+jobs:
+  terraform-plan:
+    name: terraform-plan
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v3.0.2
+
+      - name: Authenticate to Google Cloud via Workload Identity Federation
+        uses: google-github-actions/auth@v1
+        with:
+          workload_identity_provider: ${{ inputs.WORKLOAD_IDENTITY_PROVIDER }} # eg projects/{project_id_number}/locations/global/workloadIdentityPools/{pool_name}/providers/{provider_name}
+          service_account: ${{ inputs.SERVICE_ACCOUNT }} #  full service account name eg fg-sa-global-iac-myserviceaccount@somevalue.iam.gserviceaccount.com
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_wrapper: false
+
+      - name: Terraform Init
+        id: init
+        run: terraform -chdir=${{ inputs.CONFIG_FOLDER_PATH }} init 
+
+      - uses: terraform-linters/setup-tflint@v3
+        name: Setup TFLint
+
+      - name: Init TFLint
+        run: tflint --init
+        env:
+          # https://github.com/terraform-linters/tflint/blob/master/docs/user-guide/plugins.md#avoiding-rate-limiting
+          GITHUB_TOKEN: ${{ github.token }}
+
+      - name: Run TFLint
+        id: run_tflint
+        run: tflint --chdir=${{ inputs.CONFIG_FOLDER_PATH }} --module --color --minimum-failure-severity=error
+        continue-on-error: false
+
+      - name: Checkov GitHub Action
+        uses: bridgecrewio/checkov-action@8ce9f49fa0d2a9c0c7aeccb7c3820ba7594d5afa #v12.2314.0
+        id: Checkov
+        with:
+          output_format: cli
+          output_file_path: console
+          download_external_modules: true
+          directory: ${{ inputs.CONFIG_FOLDER_PATH }}
+          hard_fail_on: HIGH,CRITICAL
+        continue-on-error: false
+
+      - name: Terraform Plan
+        id: plan
+        run: |
+          terraform -chdir=${{ inputs.CONFIG_FOLDER_PATH }} plan -input=false -out=tf.plan
+        continue-on-error: false
+
+      - name: Terraform PR Comment
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          cat > ${{ inputs.CONFIG_FOLDER_PATH }}/formatted-comment.md << EOF
+          ### Terraform Plan on \`${{ inputs.CONFIG_FOLDER_PATH }}\`
+          <details><summary>Show Plan</summary>
+
+          \`\`\`
+          $(terraform -chdir=${{ inputs.CONFIG_FOLDER_PATH }} show tf.plan -no-color)
+
+          \`\`\`
+          EOF
+          gh pr comment ${{ github.event.pull_request.number }} --body-file ${{ inputs.CONFIG_FOLDER_PATH }}/formatted-comment.md

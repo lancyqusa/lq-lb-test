@@ -2,10 +2,10 @@ locals {
   prefix = var.prefix != "" ? "${var.prefix}-" : ""
   # bucket_name = "${local.prefix}pcoip-scripts-${random_id.bucket-name.hex}"
   # Name of CAM deployment service account key file in bucket
-  cam_deployment_sa_file = "cam-deployment-sa-key.json"
+  # cam_deployment_sa_file = "cam-deployment-sa-key.json"
 
-  gcp_service_account = jsondecode(file(var.gcp_credentials_file))["client_email"]
-  gcp_project_id      = jsondecode(file(var.gcp_credentials_file))["project_id"]
+  gcp_service_account = "lq-tf-svc-acc-01@sada-db-sandbox-01.iam.gserviceaccount.com"
+  gcp_project_id      = "sada-db-sandbox-01"
   gcp_named_ports = [{
     name = "cac-http"
     port = 80

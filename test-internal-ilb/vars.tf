@@ -17,11 +17,11 @@ variable "gcp_zone" {
   default     = "us-central1-a"
 }
 
-variable "gcp_credentials_file" {
-  type        = string
-  description = "Name and path to the service account credentials file"
-  default     = "./svc-account/sada-lancy-internal-dev-prj-485eddc093c5.json"
-}
+# variable "gcp_credentials_file" {
+#   type        = string
+#   description = "Name and path to the service account credentials file"
+#   default     = "./svc-account/sada-lancy-internal-dev-prj-485eddc093c5.json"
+# }
 
 variable "metadata_startup_script" {
   type    = string
