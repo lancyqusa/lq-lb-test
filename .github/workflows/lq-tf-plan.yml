@@ -1,0 +1,31 @@
+name: lq-tf-plan
+
+on:
+  workflow_dispatch:
+
+  push:
+    branches-ignore:
+    - 'master'
+    paths:
+    - 'test-internal-ilb/*'
+
+  pull_request:
+    branches: 
+    - 'main'
+    paths:
+    - 'test-internal-ilb/*'
+
+permissions:
+  contents: read
+  id-token: write
+  security-events: write
+  actions: read
+  pull-requests: write
+
+jobs:
+  terraform-plan:
+    uses: ../../tf-plan-ci-common.yml@main
+    with:
+      CONFIG_FOLDER_PATH: './test-internal-ilb'
+      WORKLOAD_IDENTITY_PROVIDER: ${{ vars.LQ_WL_ID_PROVIDER }}
+      SERVICE_ACCOUNT: ${{ vars.LQ_SVC_ACC }}
