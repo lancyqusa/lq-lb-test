@@ -24,7 +24,7 @@ permissions:
 
 jobs:
   terraform-plan:
-    uses: ./tf-plan-ci-common.yml@main
+    uses: lancyqusa/lq-lb-test/.github/workflows/tf-plan-ci-common.yml@main
     with:
       CONFIG_FOLDER_PATH: './test-internal-ilb'
       WORKLOAD_IDENTITY_PROVIDER: ${{ vars.LQ_WL_ID_PROVIDER }}
