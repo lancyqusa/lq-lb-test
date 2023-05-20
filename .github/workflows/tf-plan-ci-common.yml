@@ -24,7 +24,7 @@ jobs:
         uses: actions/checkout@v3.0.2
 
       - name: Authenticate to Google Cloud via Workload Identity Federation
-        uses: google-github-actions/auth
+        uses: google-github-actions/auth@v1.1.1
         with:
           workload_identity_provider: ${{ inputs.WORKLOAD_IDENTITY_PROVIDER }} # eg projects/{project_id_number}/locations/global/workloadIdentityPools/{pool_name}/providers/{provider_name}
           service_account: ${{ inputs.SERVICE_ACCOUNT }} #  full service account name eg fg-sa-global-iac-myserviceaccount@somevalue.iam.gserviceaccount.com
